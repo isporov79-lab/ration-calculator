@@ -17,80 +17,31 @@
 <button class="tab" data-tab="weight">Вес</button>
 <button class="tab" data-tab="settings">Цели</button>
 </nav>
-
 <section id="today" class="panel active">
 <div class="summary">
-<div><span>Ккал</span><strong id="sumKcal">0</strong></div>
-<div><span>Белок</span><strong id="sumP">0 г</strong></div>
-<div><span>Жиры</span><strong id="sumF">0 г</strong></div>
-<div><span>Углеводы</span><strong id="sumC">0 г</strong></div>
-<div><span>Клетчатка</span><strong id="sumFiber">0 г</strong></div>
+<div><span>Ккал</span><strong id="sumKcal">0</strong><small>план <b id="planKcal">2400</b></small></div>
+<div><span>Белок</span><strong id="sumP">0 г</strong><small>план <b id="planP">180 г</b></small></div>
+<div><span>Жиры</span><strong id="sumF">0 г</strong><small>план <b id="planF">85 г</b></small></div>
+<div><span>Углеводы</span><strong id="sumC">0 г</strong><small>план <b id="planC">210 г</b></small></div>
+<div><span>Клетчатка</span><strong id="sumFiber">0 г</strong><small>план <b id="planFiber">35 г</b></small></div>
 </div>
-<div class="goal"><span>Цель: <b id="goalKcal">2400 ккал</b></span><div class="bar"><i id="kcalProgress"></i></div></div>
+<div class="goal"><span>Калории: факт <b id="actualKcal">0</b> / план <b id="goalKcal">2400 ккал</b></span><div class="bar"><i id="kcalProgress"></i></div></div>
 <div class="sectionHead"><div><h2>Рацион на сегодня</h2><p>Меняй граммы или добавляй новые продукты.</p></div><button id="addMealItemBtn" class="primary">+ Добавить</button></div>
 <div id="mealList"></div>
 </section>
-
 <section id="products" class="panel">
 <div class="sectionHead"><div><h2>Моя база продуктов</h2><p>Можно добавлять любые новые продукты.</p></div><button id="newProductBtn" class="primary">+ Новый продукт</button></div>
-<input id="productSearch" class="input" type="search" placeholder="Поиск продукта…">
-<div id="productList"></div>
+<input id="productSearch" class="input" type="search" placeholder="Поиск продукта…"><div id="productList"></div>
 </section>
-
 <section id="weight" class="panel">
 <div class="sectionHead"><div><h2>Вес</h2><p>Утренние замеры и среднее за 7 дней.</p></div></div>
-<form id="weightForm" class="rowForm">
-<input id="weightDate" class="input" type="date" required>
-<input id="weightValue" class="input" type="number" min="30" max="300" step="0.1" placeholder="Вес, кг" required>
-<button class="primary">Сохранить</button>
-</form>
-<div class="summary three">
-<div><span>Последний</span><strong id="lastWeight">—</strong></div>
-<div><span>Среднее 7 дней</span><strong id="avg7">—</strong></div>
-<div><span>До цели</span><strong id="toGoal">—</strong></div>
-</div>
-<div id="weightList"></div>
+<form id="weightForm" class="rowForm"><input id="weightDate" class="input" type="date" required><input id="weightValue" class="input" type="number" min="30" max="300" step="0.1" placeholder="Вес, кг" required><button class="primary">Сохранить</button></form>
+<div class="summary three"><div><span>Последний</span><strong id="lastWeight">—</strong></div><div><span>Среднее 7 дней</span><strong id="avg7">—</strong></div><div><span>До цели</span><strong id="toGoal">—</strong></div></div><div id="weightList"></div>
 </section>
-
 <section id="settings" class="panel">
 <div class="sectionHead"><div><h2>Цели</h2><p>Настрой ориентиры под себя.</p></div></div>
-<form id="settingsForm" class="settingsGrid">
-<label>Калории<input id="targetKcal" class="input" type="number"></label>
-<label>Белок, г<input id="targetP" class="input" type="number"></label>
-<label>Жиры, г<input id="targetF" class="input" type="number"></label>
-<label>Углеводы, г<input id="targetC" class="input" type="number"></label>
-<label>Клетчатка, г<input id="targetFiber" class="input" type="number"></label>
-<label>Целевой вес, кг<input id="targetWeight" class="input" type="number" step="0.1"></label>
-<button class="primary wide">Сохранить цели</button>
-</form>
-<button id="resetAllBtn" class="danger">Сбросить приложение</button>
-</section>
-</div>
-
-<dialog id="productDialog"><form id="productForm" class="dialog">
-<div class="dialogHead"><h3 id="productDialogTitle">Новый продукт</h3><button type="button" data-close="productDialog">×</button></div>
-<input id="productId" type="hidden">
-<label>Название<input id="productName" class="input" required></label>
-<label>Категория<input id="productCategory" class="input" placeholder="Например: крупы"></label>
-<p class="hint">КБЖУ и клетчатка — на 100 г продукта.</p>
-<div class="nutri">
-<label>ккал<input id="productKcal" class="input" type="number" min="0" step="0.1" required></label>
-<label>Белок<input id="productP" class="input" type="number" min="0" step="0.1" required></label>
-<label>Жиры<input id="productF" class="input" type="number" min="0" step="0.1" required></label>
-<label>Углеводы<input id="productC" class="input" type="number" min="0" step="0.1" required></label>
-<label>Клетчатка<input id="productFiber" class="input" type="number" min="0" step="0.1" required></label>
-</div>
-<div class="actions"><button type="button" data-close="productDialog">Отмена</button><button class="primary">Сохранить</button></div>
-</form></dialog>
-
-<dialog id="addMealDialog"><form id="addMealForm" class="dialog">
-<div class="dialogHead"><h3>Добавить в рацион</h3><button type="button" data-close="addMealDialog">×</button></div>
-<label>Приём пищи<select id="mealName" class="input"><option>Завтрак</option><option>Обед</option><option>Ужин</option><option>Перекус</option><option>Напитки</option></select></label>
-<label>Продукт<select id="mealProduct" class="input"></select></label>
-<label>Вес, г<input id="mealGrams" class="input" type="number" min="1" max="3000" value="100" required></label>
-<div class="actions"><button type="button" data-close="addMealDialog">Отмена</button><button class="primary">Добавить</button></div>
-</form></dialog>
-
-<script src="app.js"></script>
-</body>
-</html>
+<form id="settingsForm" class="settingsGrid"><label>Калории<input id="targetKcal" class="input" type="number"></label><label>Белок, г<input id="targetP" class="input" type="number"></label><label>Жиры, г<input id="targetF" class="input" type="number"></label><label>Углеводы, г<input id="targetC" class="input" type="number"></label><label>Клетчатка, г<input id="targetFiber" class="input" type="number"></label><label>Целевой вес, кг<input id="targetWeight" class="input" type="number" step="0.1"></label><button class="primary wide">Сохранить цели</button></form><button id="resetAllBtn" class="danger">Сбросить приложение</button>
+</section></div>
+<dialog id="productDialog"><form id="productForm" class="dialog"><div class="dialogHead"><h3 id="productDialogTitle">Новый продукт</h3><button type="button" data-close="productDialog">×</button></div><input id="productId" type="hidden"><label>Название<input id="productName" class="input" required></label><label>Категория<input id="productCategory" class="input" placeholder="Например: крупы"></label><p class="hint">КБЖУ и клетчатка — на 100 г продукта.</p><div class="nutri"><label>ккал<input id="productKcal" class="input" type="number" min="0" step="0.1" required></label><label>Белок<input id="productP" class="input" type="number" min="0" step="0.1" required></label><label>Жиры<input id="productF" class="input" type="number" min="0" step="0.1" required></label><label>Углеводы<input id="productC" class="input" type="number" min="0" step="0.1" required></label><label>Клетчатка<input id="productFiber" class="input" type="number" min="0" step="0.1" required></label></div><div class="actions"><button type="button" data-close="productDialog">Отмена</button><button class="primary">Сохранить</button></div></form></dialog>
+<dialog id="addMealDialog"><form id="addMealForm" class="dialog"><div class="dialogHead"><h3>Добавить в рацион</h3><button type="button" data-close="addMealDialog">×</button></div><label>Приём пищи<select id="mealName" class="input"><option>Завтрак</option><option>Обед</option><option>Ужин</option><option>Перекус</option><option>Напитки</option></select></label><label>Продукт<select id="mealProduct" class="input"></select></label><label>Вес, г<input id="mealGrams" class="input" type="number" min="1" max="3000" value="100" required></label><div class="actions"><button type="button" data-close="addMealDialog">Отмена</button><button class="primary">Добавить</button></div></form></dialog>
+<script src="app.js"></script></body></html>
