@@ -23,6 +23,12 @@
     let old=card.previousElementSibling;if(old&&old.classList.contains('activityBalance'))old.remove();
     card.innerHTML='<div class="sectionHead"><div><h2>Аналитика за день</h2><p>План / Факт / Разница</p></div></div><div style="display:grid;gap:10px"><div class="activityBalance"><div><span>Калории · План</span><strong id="aKcalPlan">0 ккал</strong></div><div><span>Калории · Факт</span><strong id="aKcalFact">0 ккал</strong></div><div><span>Дефицит / профицит</span><strong id="aKcalDiff">0 ккал</strong></div></div><div class="activityBalance"><div><span>Белки · План</span><strong id="aPPlan">0 г</strong></div><div><span>Факт</span><strong id="aPFact">0 г</strong></div><div><span>Разница</span><strong id="aPDiff">0 г</strong></div></div><div class="activityBalance"><div><span>Жиры · План</span><strong id="aFPlan">0 г</strong></div><div><span>Факт</span><strong id="aFFact">0 г</strong></div><div><span>Разница</span><strong id="aFDiff">0 г</strong></div></div><div class="activityBalance"><div><span>Углеводы · План</span><strong id="aCPlan">0 г</strong></div><div><span>Факт</span><strong id="aCFact">0 г</strong></div><div><span>Разница</span><strong id="aCDiff">0 г</strong></div></div></div>';
   }
+  function moveMealsAboveAnalytics(){
+    let card=$('#aKcalPlan')?.closest('.settingsCard'),head=document.querySelector('#today .mealSectionHead'),list=$('#mealList');
+    if(!card||!head||!list||!card.parentNode)return;
+    card.parentNode.insertBefore(head,card);
+    card.parentNode.insertBefore(list,card);
+  }
   function put(id,value){let el=$(id);if(el)el.textContent=value}
   function putDiff(id,obj){let el=$(id);if(!el)return;el.textContent=obj.text;el.style.color=obj.color;el.style.fontWeight='800'}
   function renderDailyAnalytics(){
@@ -53,5 +59,5 @@
   }
   if(typeof renderToday==='function'){const baseRenderTodayHistory=renderToday;renderToday=function(){baseRenderTodayHistory();renderDailyAnalytics()}}
   window.renderDailyAnalytics=renderDailyAnalytics;window.selectNutritionDate=selectNutritionDate;
-  installAnalyticsLayout();installDateNavigator();if(corrected&&typeof renderToday==='function')renderToday();renderDailyAnalytics();
+  installAnalyticsLayout();moveMealsAboveAnalytics();installDateNavigator();if(corrected&&typeof renderToday==='function')renderToday();renderDailyAnalytics();
 })();
