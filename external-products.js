@@ -14,8 +14,7 @@
   const results=wrap.querySelector('#externalProductResults');
   let lastQuery='';
 
-  function localMatches(q){q=q.trim().toLowerCase();if(!q)return true;try{return st.products.some(p=>(p.name||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q))}catch{return true}}
-  function syncButton(){const q=input.value.trim();button.hidden=q.length<2||localMatches(q);if(q!==lastQuery){status.textContent='';results.innerHTML=''}}
+  function syncButton(){const q=input.value.trim();button.hidden=q.length<2;if(q!==lastQuery){status.textContent='';results.innerHTML=''}}
   input.addEventListener('input',syncButton);setTimeout(syncButton,0);
 
   const num=v=>{const x=Number(v);return Number.isFinite(x)&&x>=0?x:0};
