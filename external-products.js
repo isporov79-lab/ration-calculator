@@ -3,6 +3,11 @@
   const list=document.querySelector('#productList');
   if(!input||!list)return;
 
+  // The script can be evaluated again by an installed PWA after a service-worker
+  // refresh. Keep the feature idempotent so a second evaluation never creates
+  // a second search button/status/results block.
+  if(document.querySelector('#externalProductSearch'))return;
+
   const wrap=document.createElement('div');
   wrap.id='externalProductSearch';
   wrap.style.margin='10px 0 18px';
@@ -13,8 +18,21 @@
   const status=wrap.querySelector('#externalProductStatus');
   const results=wrap.querySelector('#externalProductResults');
   let lastQuery='';
+  let searchSeq=0;
+  let activeController=null;
 
-  function syncButton(){const q=input.value.trim();button.hidden=q.length<2;if(q!==lastQuery){status.textContent='';results.innerHTML=''}}
+  function resetResult(){status.textContent='';results.innerHTML=''}
+  function syncButton(){
+    const q=input.value.trim();
+    button.hidden=q.length<2;
+    if(q!==lastQuery){
+      lastQuery='';
+      if(activeController){activeController.abort();activeController=null}
+      searchSeq++;
+      resetResult();
+      button.disabled=false;
+    }
+  }
   input.addEventListener('input',syncButton);setTimeout(syncButton,0);
 
   const num=v=>{const x=Number(v);return Number.isFinite(x)&&x>=0?x:0};
@@ -47,30 +65,50 @@
     results.querySelectorAll('.externalPick').forEach(b=>b.onclick=()=>openCandidate(products[Number(b.dataset.i)]));
   }
 
-  async function fetchJson(url){const r=await fetch(url,{headers:{Accept:'application/json'},cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+  async function fetchJson(url,signal){const r=await fetch(url,{headers:{Accept:'application/json'},cache:'no-store',signal});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
 
-  async function searchSearchALicious(q){
+  async function searchSearchALicious(q,signal){
     const url='https://search.openfoodfacts.org/search?q='+encodeURIComponent(q)+'&page_size=12&langs=ru&langs=en';
-    const data=await fetchJson(url);
+    const data=await fetchJson(url,signal);
     const raw=Array.isArray(data?.hits)?data.hits:Array.isArray(data?.products)?data.products:[];
     return raw.map(normalizeHit).filter(p=>p&&productName(p)).slice(0,12);
   }
 
-  async function searchLegacy(q){
-    const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=12&fields=code,product_name,product_name_ru,product_name_en,generic_name,generic_name_ru,generic_name_en,brands,nutriments';
-    const data=await fetchJson(url);return (Array.isArray(data?.products)?data.products:[]).filter(p=>p&&productName(p)).slice(0,12);
+  async function searchLegacy(q,signal){
+    const hosts=['https://world.openfoodfacts.org','https://ru.openfoodfacts.org'];
+    let lastError=null;
+    for(const host of hosts){
+      try{
+        const url=host+'/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=12&fields=code,product_name,product_name_ru,product_name_en,generic_name,generic_name_ru,generic_name_en,brands,nutriments';
+        const data=await fetchJson(url,signal);
+        return (Array.isArray(data?.products)?data.products:[]).filter(p=>p&&productName(p)).slice(0,12);
+      }catch(e){if(e?.name==='AbortError')throw e;lastError=e}
+    }
+    throw lastError||new Error('Open Food Facts unavailable');
   }
 
-  async function searchOpenFoodFacts(q){
+  async function searchOpenFoodFacts(q,signal){
     let primaryError=null;
-    try{const p=await searchSearchALicious(q);if(p.length)return p}catch(e){primaryError=e}
-    try{return await searchLegacy(q)}catch(e){throw primaryError||e}
+    try{const p=await searchSearchALicious(q,signal);if(p.length)return p}catch(e){if(e?.name==='AbortError')throw e;primaryError=e}
+    try{return await searchLegacy(q,signal)}catch(e){if(e?.name==='AbortError')throw e;throw primaryError||e}
   }
 
   button.addEventListener('click',async()=>{
-    const q=input.value.trim();if(q.length<2)return;lastQuery=q;button.disabled=true;status.textContent='Ищу во внешней базе…';results.innerHTML='';
-    try{render(await searchOpenFoodFacts(q))}
-    catch(e){console.warn('External product search failed',e);status.textContent='Не удалось связаться с внешней базой продуктов. Поиск временно недоступен.'}
-    finally{button.disabled=false}
+    const q=input.value.trim();if(q.length<2)return;
+    if(activeController)activeController.abort();
+    const controller=new AbortController();activeController=controller;
+    const seq=++searchSeq;
+    lastQuery=q;button.disabled=true;status.textContent='Ищу во внешней базе…';results.innerHTML='';
+    try{
+      const found=await searchOpenFoodFacts(q,controller.signal);
+      if(seq!==searchSeq)return;
+      render(found);
+    }catch(e){
+      if(e?.name==='AbortError'||seq!==searchSeq)return;
+      console.warn('External product search failed',e);
+      status.textContent='Не удалось связаться с внешней базой продуктов. Попробуй ещё раз — повторный поиск доступен сразу.';
+    }finally{
+      if(seq===searchSeq){button.disabled=false;activeController=null}
+    }
   });
 })();
