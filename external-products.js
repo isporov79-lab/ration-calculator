@@ -33,10 +33,11 @@
   const val=(n,...keys)=>{for(const k of keys){if(n&&n[k]!=null&&n[k]!=='')return num(n[k])}return 0};
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=v=>Number(v||0).toFixed(1).replace('.',',');
+  const productName=p=>(p?.product_name_ru||p?.product_name||p?.product_name_en||p?.generic_name_ru||p?.generic_name||p?.generic_name_en||'').trim();
 
   function openCandidate(p){
     const n=p.nutriments||{};
-    const name=(p.product_name||p.product_name_ru||p.product_name_en||'Продукт').trim();
+    const name=productName(p)||'Продукт';
     const brand=(p.brands||'').split(',')[0].trim();
     if(typeof openProduct==='function')openProduct();
     const title=document.querySelector('#productDialogTitle');
@@ -53,11 +54,11 @@
 
   function render(products){
     results.innerHTML='';
-    if(!products.length){status.textContent='Во внешней базе ничего подходящего не найдено.';return}
+    if(!products.length){status.textContent='Во внешней базе ничего подходящего не найдено. Попробуй более короткое название, например «молоко», «сыр» или название бренда.';return}
     status.textContent='Найдено во внешней базе. БЖУ указаны на 100 г — проверь значения перед сохранением.';
     products.forEach((p,i)=>{
       const n=p.nutriments||{};
-      const name=(p.product_name||p.product_name_ru||p.product_name_en||'Без названия').trim();
+      const name=productName(p)||'Без названия';
       const brand=(p.brands||'').split(',')[0].trim();
       const kcal=val(n,'energy-kcal_100g','energy-kcal_value'),pr=val(n,'proteins_100g','proteins_value'),fat=val(n,'fat_100g','fat_value'),carb=val(n,'carbohydrates_100g','carbohydrates_value'),fiber=val(n,'fiber_100g','fiber_value');
       const card=document.createElement('div');
@@ -68,6 +69,31 @@
     results.querySelectorAll('.externalPick').forEach(b=>b.onclick=()=>openCandidate(products[Number(b.dataset.i)]));
   }
 
+  async function fetchJson(url){
+    const r=await fetch(url,{headers:{Accept:'application/json'},cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+
+  async function searchOpenFoodFacts(q){
+    const base='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=24';
+    const attempts=[
+      base+'&fields=code,product_name,product_name_ru,product_name_en,generic_name,generic_name_ru,generic_name_en,brands,nutriments',
+      base
+    ];
+    let lastError=null;
+    for(const url of attempts){
+      try{
+        const data=await fetchJson(url);
+        const raw=Array.isArray(data?.products)?data.products:[];
+        const products=raw.filter(p=>p&&productName(p)).slice(0,12);
+        if(products.length)return products;
+      }catch(e){lastError=e}
+    }
+    if(lastError)throw lastError;
+    return [];
+  }
+
   button.addEventListener('click',async()=>{
     const q=input.value.trim();
     if(q.length<2)return;
@@ -76,14 +102,11 @@
     status.textContent='Ищу во внешней базе…';
     results.innerHTML='';
     try{
-      const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=12&fields=code,product_name,product_name_ru,product_name_en,brands,nutriments';
-      const r=await fetch(url,{headers:{Accept:'application/json'}});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const data=await r.json();
-      const products=(Array.isArray(data.products)?data.products:[]).filter(p=>p&&(p.product_name||p.product_name_ru||p.product_name_en)&&p.nutriments).slice(0,10);
+      const products=await searchOpenFoodFacts(q);
       render(products);
     }catch(e){
-      status.textContent='Не удалось выполнить внешний поиск. Проверь интернет и попробуй ещё раз.';
+      console.warn('External product search failed',e);
+      status.textContent='Внешняя база сейчас не ответила. Проверь интернет и попробуй ещё раз через несколько секунд.';
     }finally{button.disabled=false}
   });
 })();
