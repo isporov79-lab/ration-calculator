@@ -17,7 +17,7 @@
   const nativeEnsureCurrentDay=typeof ensureCurrentDay==='function'?ensureCurrentDay:null;
   if(nativeEnsureCurrentDay)ensureCurrentDay=function(){return historyMode?false:nativeEnsureCurrentDay()};
   const dateLabel=date=>new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
-  const signed=(actual,plan,unit)=>{let diff=actual-plan;if(Math.abs(diff)<0.05)return {text:'0 '+unit,color:'inherit'};return {text:(diff>0?'+':'−')+fmt(Math.abs(diff),0)+' '+unit,color:diff>0?'#dc2626':'#1677ff'}};
+  const signed=(actual,plan,unit)=>{let diff=actual-plan;if(Math.abs(diff)<0.05)return {text:'0 '+unit,color:'inherit'};return {text:(diff>0?'+':'−')+fmt(Math.abs(diff),0)+' '+unit,color:diff>0?'#dc2626':'#17aa71'}};
   const pct=(actual,plan)=>plan>0?Math.round(actual/plan*100):0;
   function ringCard(key,label,ringColor){
     return '<div class="macroCard"><div class="macroLabel">'+label+'</div><div class="ring" id="aRing'+key+'" style="--ring:'+ringColor+'"><strong id="aPct'+key+'">0%</strong></div><div class="macroFact"><span id="aPlan'+key+'">0</span> / <span id="aFact'+key+'">0</span></div><div class="macroRemain" id="aDiff'+key+'">0</div></div>';
