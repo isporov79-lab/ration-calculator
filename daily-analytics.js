@@ -18,20 +18,32 @@
   if(nativeEnsureCurrentDay)ensureCurrentDay=function(){return historyMode?false:nativeEnsureCurrentDay()};
   const dateLabel=date=>new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
   const signed=(actual,plan,unit)=>{let diff=actual-plan;if(Math.abs(diff)<0.05)return {text:'0 '+unit,color:'inherit'};return {text:(diff>0?'+':'−')+fmt(Math.abs(diff),0)+' '+unit,color:diff>0?'#dc2626':'#1677ff'}};
+  const pct=(actual,plan)=>plan>0?Math.round(actual/plan*100):0;
+  function ringCard(key,label,ringColor){
+    return '<div class="macroCard"><div class="macroLabel">'+label+'</div><div class="ring" id="aRing'+key+'" style="--ring:'+ringColor+'"><strong id="aPct'+key+'">0%</strong></div><div class="macroFact"><span id="aPlan'+key+'">0</span> / <span id="aFact'+key+'">0</span></div><div class="macroRemain" id="aDiff'+key+'">0</div></div>';
+  }
   function installAnalyticsLayout(){
-    let card=$('#dayCalorieStatus')?.closest('.settingsCard');if(!card)return;
+    let card=$('#dayCalorieStatus')?.closest('.settingsCard')||document.querySelector('#today .settingsCard');if(!card)return;
     let old=card.previousElementSibling;if(old&&old.classList.contains('activityBalance'))old.remove();
-    card.innerHTML='<div class="sectionHead"><div><h2>Аналитика за день</h2><p>План · Факт · Дефицит/профицит</p></div></div><div style="display:grid;gap:10px"><div class="activityBalance"><div><span>Калории · План</span><strong id="aKcalPlan">0 ккал</strong></div><div><span>Калории · Факт</span><strong id="aKcalFact">0 ккал</strong></div><div><span>Дефицит / профицит</span><strong id="aKcalDiff">0 ккал</strong></div></div><div class="activityBalance"><div><span>Белки · План</span><strong id="aPPlan">0 г</strong></div><div><span>Факт</span><strong id="aPFact">0 г</strong></div><div><span>Разница</span><strong id="aPDiff">0 г</strong></div></div><div class="activityBalance"><div><span>Жиры · План</span><strong id="aFPlan">0 г</strong></div><div><span>Факт</span><strong id="aFFact">0 г</strong></div><div><span>Разница</span><strong id="aFDiff">0 г</strong></div></div><div class="activityBalance"><div><span>Углеводы · План</span><strong id="aCPlan">0 г</strong></div><div><span>Факт</span><strong id="aCFact">0 г</strong></div><div><span>Разница</span><strong id="aCDiff">0 г</strong></div></div></div>';
+    card.innerHTML='<div class="sectionHead"><div><h2>Аналитика за день</h2><p>План / Факт / Разница</p></div></div><div class="summary" id="dailyAnalyticsRings">'+ringCard('Kcal','Калории','var(--blue)')+ringCard('P','Белки','var(--green)')+ringCard('F','Жиры','var(--orange)')+ringCard('C','Углеводы','var(--red)')+ringCard('Fiber','Клетчатка','var(--green)')+'</div>';
   }
   function put(id,value){let el=$(id);if(el)el.textContent=value}
-  function putDiff(id,obj){let el=$(id);if(!el)return;el.textContent=obj.text;el.style.color=obj.color}
+  function putDiff(id,obj){let el=$(id);if(!el)return;el.textContent=obj.text;el.style.color=obj.color;el.style.fontWeight='800'}
+  function putRing(key,actual,plan,unit){
+    let percent=pct(actual,plan),ring=$('#aRing'+key);if(ring)ring.style.setProperty('--p',Math.max(0,Math.min(percent,100)));
+    put('#aPct'+key,percent+'%');
+    put('#aPlan'+key,fmt(plan,0));
+    put('#aFact'+key,fmt(actual,0)+(unit?' '+unit:''));
+    putDiff('#aDiff'+key,signed(actual,plan,unit||''));
+  }
   function renderDailyAnalytics(){
-    if(!$('#aKcalPlan'))return;
-    let t=total(),kp=n(st.settings.kcal),pp=n(st.settings.p),fp=n(st.settings.f),cp=n(st.settings.c);
-    put('#aKcalPlan',Math.round(kp)+' ккал');put('#aKcalFact',Math.round(t.kcal)+' ккал');putDiff('#aKcalDiff',signed(t.kcal,kp,'ккал'));
-    put('#aPPlan',fmt(pp,0)+' г');put('#aPFact',fmt(t.p,0)+' г');putDiff('#aPDiff',signed(t.p,pp,'г'));
-    put('#aFPlan',fmt(fp,0)+' г');put('#aFFact',fmt(t.f,0)+' г');putDiff('#aFDiff',signed(t.f,fp,'г'));
-    put('#aCPlan',fmt(cp,0)+' г');put('#aCFact',fmt(t.c,0)+' г');putDiff('#aCDiff',signed(t.c,cp,'г'));
+    if(!$('#aRingKcal'))return;
+    let t=total(),s=st.settings;
+    putRing('Kcal',t.kcal,n(s.kcal),'ккал');
+    putRing('P',t.p,n(s.p),'г');
+    putRing('F',t.f,n(s.f),'г');
+    putRing('C',t.c,n(s.c),'г');
+    putRing('Fiber',t.fiber,n(s.fiber),'г');
     let heading=document.querySelector('#today .heroHead h2');if(heading)heading.textContent=st.activeDate===localDayKey()?'Сегодня':dateLabel(st.activeDate);
     if($('#todayDate'))$('#todayDate').textContent=dateLabel(st.activeDate);
   }
